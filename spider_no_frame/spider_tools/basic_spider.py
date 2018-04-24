@@ -36,7 +36,7 @@ def get_user_agent():
     return random.choice(user_agents)
 
 
-def get_data_common(url, proxy=None, do_chose=0, header=[], decodeInfo='utf-8', timeout=None, num_retries=5):
+def get_data_get(url, proxy=None, do_chose=0, header=[], decodeInfo='utf-8', timeout=None, num_retries=5):
     '''通用方式获取html页面
     参数说明:
         url : 爬取地址
@@ -70,12 +70,51 @@ def get_data_common(url, proxy=None, do_chose=0, header=[], decodeInfo='utf-8', 
         if num_retries > 0:
             if hasattr(e, 'code') and 500 <= e.code <= 600:
                 time.sleep(random.randint(INTERVAL_BEGIN, INTERVAL_END))
-                data = get_data_common(url, proxy, do_chose, header, decodeInfo, timeout, num_retries - 1)
+                data = get_data_get(url, proxy, do_chose, header, decodeInfo, timeout, num_retries - 1)
+    except Exception as e:
+        print(e)
     return data
     
 
-def get_html_inner_brower():
-    '''通过内置浏览器的方式获取html页面,动态页面很难实现规律化的处理，这里不对该方式进行封装'''
+def get_data_post(url, proxy=None, do_chose=0, header=None,formData=None, decodeInfo='utf-8', timeout=None, num_retries=5):
+    '''通用方式获取html页面
+    参数说明:
+        url : 爬取地址
+        proxy : 代理信息(字典 {'protocol_type': '[username:password@]address:port'} )
+        chose : 是否一定选择代理 1: 一定 0: 根据概率随机选择
+        header : 设置请求头(字典)
+        formData : 提交的数据 bytes
+        decodeInfo : 编码方式
+        timeout : 响应的超时时间
+        num_retries : 爬取失败后，需要重试的重试次数
+    '''
+    if not do_chose and proxy:
+        if random.randint(1, 10) >= 7:
+            proxy = False
+
+    # 处理代理
+    proxy_support = request.ProxyHandler(proxy)
+    opener = request.build_opener(proxy_support)
+    request.install_opener(opener)
+    data = None
+    # 根据url获取数据
+    try:
+        req = request.Request(url, data=formData, headers=header, method='POST')
+        response = request.urlopen(req, timeout=timeout)
+        data = response.read().decode(decodeInfo)
+    except UnicodeDecodeError:
+        print('编码解析出错')
+    except error.URLError:
+        print('url错误') 
+    except error.HTTPError as e:
+        print('获取http响应出错')
+        if num_retries > 0:
+            if hasattr(e, 'code') and 500 <= e.code <= 600:
+                time.sleep(random.randint(INTERVAL_BEGIN, INTERVAL_END))
+                data = get_data_post(url, proxy, do_chose, header,formData, decodeInfo, timeout, num_retries - 1)
+    except Exception as e:
+        print(e)
+    return data
     
     
     
