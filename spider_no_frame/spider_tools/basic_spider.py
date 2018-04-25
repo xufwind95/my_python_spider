@@ -6,6 +6,7 @@ from urllib import request
 from urllib import error
 import random
 import time
+import traceback
 
 # 未获取到页面后再次发起请求的时间间隔:开始时间 
 INTERVAL_BEGIN = 1
@@ -72,9 +73,10 @@ def get_data_get(url, proxy=None, do_chose=0, header=[], decodeInfo='utf-8', tim
                 time.sleep(random.randint(INTERVAL_BEGIN, INTERVAL_END))
                 data = get_data_get(url, proxy, do_chose, header, decodeInfo, timeout, num_retries - 1)
     except Exception as e:
-        print(e)
+        print('some error happened:')
+        traceback.print_exc()
     return data
-    
+
 
 def get_data_post(url, proxy=None, do_chose=0, header=None,formData=None, decodeInfo='utf-8', timeout=None, num_retries=5):
     '''通用方式获取html页面
